@@ -1,0 +1,29 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+# VS Code
+.vscode/
+
+# JetBrains
+.idea/
+*.iml
+*.log
+*.tmp
+*.swp
+*~
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Spotlight
+.Spotlight-V100
+.Trashes
+
+# AFP / network
+.AppleDB
+.AppleDesktop

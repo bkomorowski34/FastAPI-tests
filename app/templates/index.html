@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Items CRUD</title>
+    <script src="/static/cacheBuster.js"></script>
+    <link rel="stylesheet" href="/static/style.css?v=1">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico" />
+</head>
+<body>
+
+    <div class="container">
+        <h1>Items</h1>
+    
+        <form id="add-form">
+            <input type="text" id="item-name" placeholder="Nazwa itemu" required />
+            <input type="text" id="item-description" placeholder="Opis itemu" />
+            <button type="submit">Dodaj</button>
+        </form>
+        
+    
+        <ul id="items-list">
+            <!-- JS renderuje elementy -->
+        </ul>
+    </div>
+    
+<script src="/static/main.js"></script>
+<script>addCacheBuster();</script>
+</body>
+</html>
