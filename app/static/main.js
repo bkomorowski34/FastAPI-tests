@@ -1,104 +1,119 @@
-const API = "/items";
+async function handleResponse(response) {
+    const contentType = response.headers.get("content-type");
+
+    let data = null;
+    if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+    }
+
+    if (response.ok) {
+        return data;
+    }
+
+    // FastAPI / Pydantic (422)
+    if (response.status === 422 && data?.detail) {
+        const messages = data.detail.map(err => {
+            const field = err.loc?.[1] || "field";
+            return `${field}: ${err.msg}`;
+        });
+
+        throw new Error(messages.join("\n"));
+    }
+
+    // inne błędy API
+    if (data?.detail) {
+        throw new Error(data.detail);
+    }
+
+    throw new Error("Wystąpił nieznany błąd");
+}
+
+//const API = "/items";
 
 async function loadItems() {
     try {
-      const response = await fetch('/items/');
-      if (!response.ok) throw new Error('Błąd ładowania');
-  
-      const items = await response.json();
-  
-      const itemsList = document.getElementById('items-list');
-      itemsList.innerHTML = '';
-  
-      if (items.length === 0) {
-        const emptyLi = document.createElement('li');
-        emptyLi.textContent = 'Brak elementów';
-        emptyLi.classList.add('empty');
-        itemsList.appendChild(emptyLi);
-        return;
-      }
-  
-      items.forEach(item => {
-        const li = document.createElement('li');
-  
-        // kontener na nazwę i opis
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'item-content';
-  
-        const nameDiv = document.createElement('div');
-        nameDiv.className = 'item-name';
-        nameDiv.textContent = item.name;
-  
-        const descDiv = document.createElement('div');
-        descDiv.className = 'item-description';
-        descDiv.textContent = item.description || '';
-  
-        contentDiv.appendChild(nameDiv);
-        contentDiv.appendChild(descDiv);
-  
-        // przycisk usuń
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'delete';
-        deleteBtn.textContent = 'Usuń';
-        deleteBtn.addEventListener('click', () => deleteItem(item.id));
-  
-        li.appendChild(contentDiv);
-        li.appendChild(deleteBtn);
-  
-        itemsList.appendChild(li);
-      });
-  
-    } catch (error) {
-      console.error(error);
-    }
-  }
-  
+        const response = await fetch("/items/");
+        const items = await handleResponse(response);
 
+        const itemsList = document.getElementById("items-list");
+        itemsList.innerHTML = "";
 
-  document.getElementById('add-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
+        if (items.length === 0) {
+            const li = document.createElement("li");
+            li.textContent = "Brak elementów";
+            li.classList.add("empty");
+            itemsList.appendChild(li);
+            return;
+        }
 
-    const nameInput = document.getElementById('item-name');
-    const descInput = document.getElementById('item-description');
+        items.forEach(item => {
+            const li = document.createElement("li");
 
-    const newItem = {
-        name: nameInput.value.trim(),
-        description: descInput.value.trim()
-    };
+            const contentDiv = document.createElement("div");
+            contentDiv.className = "item-content";
 
-    if (!newItem.name) {
-        alert('Nazwa jest wymagana');
-        return;
-    }
+            const nameDiv = document.createElement("div");
+            nameDiv.className = "item-name";
+            nameDiv.textContent = item.name;
 
-    try {
-        const response = await fetch('/items/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(newItem)
+            const descDiv = document.createElement("div");
+            descDiv.className = "item-description";
+            descDiv.textContent = item.description || "";
+
+            contentDiv.appendChild(nameDiv);
+            contentDiv.appendChild(descDiv);
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "delete";
+            deleteBtn.textContent = "Usuń";
+            deleteBtn.onclick = () => deleteItem(item.id);
+
+            li.appendChild(contentDiv);
+            li.appendChild(deleteBtn);
+            itemsList.appendChild(li);
         });
 
-        if (!response.ok) throw new Error('Błąd dodawania itemu');
+    } catch (err) {
+        alert(err.message);
+    }
+}
 
-        // Wyczyść formularz po dodaniu
-        nameInput.value = '';
-        descInput.value = '';
+document.getElementById("add-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-        // Załaduj ponownie listę
+    const nameInput = document.getElementById("item-name");
+    const descInput = document.getElementById("item-description");
+
+    try {
+        const response = await fetch("/items/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                name: nameInput.value.trim(),
+                description: descInput.value.trim()
+            })
+        });
+
+        await handleResponse(response);
+
+        nameInput.value = "";
+        descInput.value = "";
         loadItems();
 
-    } catch (error) {
-        console.error(error);
-        alert('Coś poszło nie tak przy dodawaniu');
+    } catch (err) {
+        alert(err.message);
     }
 });
 
-
-async function deleteItem(id){
-    await fetch(`${API}/${id}`, {method: "DELETE"});
-    loadItems();
+async function deleteItem(id) {
+    try {
+        const response = await fetch(`/items/${id}`, { method: "DELETE" });
+        await handleResponse(response);
+        loadItems();
+    } catch (err) {
+        alert(err.message);
+    }
 }
+
 
 loadItems();

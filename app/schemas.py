@@ -1,13 +1,17 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-class ItemCreate(BaseModel):
-    name: str
-    description: str | None = None
+class ItemBase(BaseModel):
+    name: str = Field(..., min_length=3, max_length=50)
+    description: str | None = Field(
+        default=None,
+        max_length=255
+    )
 
-class ItemRead(BaseModel):
+class ItemCreate(ItemBase):
+    pass
+
+class ItemRead(ItemBase):
     id: int
-    name: str
-    description: str | None
 
     class Config:
         from_attributes = True
